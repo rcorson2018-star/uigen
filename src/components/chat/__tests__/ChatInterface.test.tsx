@@ -60,11 +60,22 @@ afterEach(() => {
   cleanup();
 });
 
-test("renders chat interface with message list and input", () => {
+test("renders empty state and input when no messages", () => {
+  render(<ChatInterface />);
+
+  expect(screen.getByText("Start a conversation to generate React components")).toBeDefined();
+  expect(screen.getByTestId("message-input")).toBeDefined();
+});
+
+test("renders message list when messages exist", () => {
+  (useChat as any).mockReturnValue({
+    ...mockUseChat,
+    messages: [{ id: "1", role: "user", content: "Hello" }],
+  });
+
   render(<ChatInterface />);
 
   expect(screen.getByTestId("message-list")).toBeDefined();
-  expect(screen.getByTestId("message-input")).toBeDefined();
 });
 
 test("passes correct props to MessageList", () => {
@@ -138,9 +149,13 @@ test("isLoading is false when status is idle", () => {
 
 
 test("scrolls when messages change", () => {
+  (useChat as any).mockReturnValue({
+    ...mockUseChat,
+    messages: [{ id: "1", role: "user", content: "Hello" }],
+  });
+
   const { rerender } = render(<ChatInterface />);
 
-  // Get initial scroll container
   const scrollContainer = screen.getByTestId("message-list").closest("[data-radix-scroll-area-viewport]");
   expect(scrollContainer).toBeDefined();
 
@@ -155,12 +170,16 @@ test("scrolls when messages change", () => {
 
   rerender(<ChatInterface />);
 
-  // Verify component re-rendered with new messages
   const messageList = screen.getByTestId("message-list");
   expect(messageList.textContent).toContain("2 messages");
 });
 
 test("renders with correct layout classes", () => {
+  (useChat as any).mockReturnValue({
+    ...mockUseChat,
+    messages: [{ id: "1", role: "user", content: "Hello" }],
+  });
+
   const { container } = render(<ChatInterface />);
 
   const mainDiv = container.firstChild as HTMLElement;
@@ -176,4 +195,12 @@ test("renders with correct layout classes", () => {
   const inputWrapper = screen.getByTestId("message-input").parentElement;
   expect(inputWrapper?.className).toContain("mt-4");
   expect(inputWrapper?.className).toContain("flex-shrink-0");
+});
+
+test("shows empty state centered layout when no messages", () => {
+  const { container } = render(<ChatInterface />);
+
+  const emptyState = container.querySelector(".flex-1.flex.flex-col.items-center.justify-center");
+  expect(emptyState).toBeDefined();
+  expect(screen.getByText("I can help you create buttons, forms, cards, and more")).toBeDefined();
 });
